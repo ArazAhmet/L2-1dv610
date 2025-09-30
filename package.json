@@ -8,6 +8,9 @@
     "start": "node codeMetric.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+    "dependencies": {
+    "node-recursive-directory": "^1.2.3"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ArazAhmet/L2-1dv610.git"
