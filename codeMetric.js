@@ -1,10 +1,12 @@
 import { exec } from "child_process"
 import { promisify } from "util"
 import fs from "fs"
+import path from "path"
 
 const executeCommand = promisify(exec)
 const CLONE_DIR = "./cloned-repository"
 const DEFAULT_REPO = "https://github.com/ArazAhmet/Uppgift_2_Webbteknik.git"
+const isWindows = process.platform === 'win32'
 
 export async function analyzeRepository(repositoryUrl = DEFAULT_REPO) {
   try {
@@ -26,15 +28,18 @@ async function cloneRepository(url) {
   await removeDirectory(CLONE_DIR)
   await createDirectory(CLONE_DIR)
 
-  const cloneCmd = `cd ${CLONE_DIR} && git clone ${url}`
-  await executeCommand(cloneCmd)
+  const cloneCmd = isWindows
+    ? `cd /d "${CLONE_DIR}" && git clone ${url}`
+    : `cd ${CLONE_DIR} && git clone ${url}`
 
+  await executeCommand(cloneCmd)
   console.log("Repository downloaded successfully")
 }
 
 async function createDirectory(dirPath) {
   try {
-    await executeCommand(`mkdir -p ${dirPath}`)
+    const cmd = isWindows ? `mkdir "${dirPath}"` : `mkdir -p ${dirPath}`
+    await executeCommand(cmd)
   } catch {
     fs.mkdirSync(dirPath, { recursive: true })
   }
@@ -44,7 +49,8 @@ async function removeDirectory(dirPath) {
   if (!fs.existsSync(dirPath)) return
 
   try {
-    await executeCommand(`rm -rf ${dirPath}`)
+    const cmd = isWindows ? `rmdir /s /q "${dirPath}"` : `rm -rf ${dirPath}`
+    await executeCommand(cmd)
   } catch {
     fs.rmSync(dirPath, { recursive: true, force: true })
   }
