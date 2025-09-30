@@ -14,8 +14,9 @@ export async function analyzeRepository(repositoryUrl = DEFAULT_REPO) {
     console.log(`Repository: ${repositoryUrl}`)
 
     await cloneRepository(repositoryUrl)
-    await removeDirectory(CLONE_DIR)
+    const repoPath = findRepositoryPath()
 
+    await removeDirectory(CLONE_DIR)
     console.log("\nAnalysis completed successfully!")
   } catch (error) {
     console.error(`Analysis failed: ${error.message}`)
@@ -34,6 +35,20 @@ async function cloneRepository(url) {
 
   await executeCommand(cloneCmd)
   console.log("Repository downloaded successfully")
+}
+
+function findRepositoryPath() {
+  const contents = fs.readdirSync(CLONE_DIR)
+  const directories = contents.filter(item =>
+    fs.statSync(path.join(CLONE_DIR, item)).isDirectory() &&
+    !item.startsWith('.')
+  )
+
+  if (directories.length === 0) return CLONE_DIR
+
+  const repoPath = path.join(CLONE_DIR, directories[0])
+  console.log(`Found repository at: ${repoPath}`)
+  return repoPath
 }
 
 async function createDirectory(dirPath) {
