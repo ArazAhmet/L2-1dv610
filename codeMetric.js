@@ -12,24 +12,60 @@ const isWindows = process.platform === 'win32'
 
 export async function analyzeRepository(repositoryUrl = DEFAULT_REPO, options = {}) {
   try {
-    console.log("Starting Language Analyzer...")
-    console.log(`Repository: ${repositoryUrl}`)
+    logAnalysisStart(repositoryUrl)
 
-    await cloneRepository(repositoryUrl)
-    const repoPath = findRepositoryPath()
+    const repoPath = await prepareRepository(repositoryUrl)
 
-    displayHeader(repositoryUrl)
-    await analyzeLanguageDistribution(repoPath)
+    await performAnalysis(repositoryUrl, repoPath)
 
-    if (!options.keepFiles) await removeDirectory(CLONE_DIR)
-    console.log("\nAnalysis completed successfully!")
+    await cleanupIfNeeded(options)
+
+    logAnalysisComplete()
 
   } catch (error) {
-    console.error(`Analysis failed: ${error.message}`)
-    if (error.message.includes('git')) {
-      console.error("Check: Git installed? Repository accessible? Internet connection?")
-    }
+    handleAnalysisError(error)
   }
+}
+
+function logAnalysisStart(url) {
+  console.log("Starting Language Analyzer...")
+  console.log(`Repository: ${url}`)
+}
+
+async function prepareRepository(url) {
+  await cloneRepository(url)
+  return findRepositoryPath()
+}
+
+async function performAnalysis(url, repoPath) {
+  displayHeader(url)
+  await analyzeLanguageDistribution(repoPath)
+}
+
+async function cleanupIfNeeded(options) {
+  if (!options.keepFiles) {
+    await removeDirectory(CLONE_DIR)
+  }
+}
+
+function logAnalysisComplete() {
+  console.log("\nAnalysis completed successfully!")
+}
+
+function handleAnalysisError(error) {
+  console.error(`Analysis failed: ${error.message}`)
+
+  if (isGitError(error)) {
+    logGitErrorHelp()
+  }
+}
+
+function isGitError(error) {
+  return error.message.includes('git')
+}
+
+function logGitErrorHelp() {
+  console.error("Check: Git installed? Repository accessible? Internet connection?")
 }
 
 export async function cloneRepository(url) {
@@ -38,46 +74,85 @@ export async function cloneRepository(url) {
   await removeDirectory(CLONE_DIR)
   await createDirectory(CLONE_DIR)
 
-  const cloneCmd = isWindows
+  const cloneCmd = buildCloneCommand(url)
+  await executeCommand(cloneCmd)
+
+  console.log("Repository downloaded successfully")
+}
+
+function buildCloneCommand(url) {
+  return isWindows
     ? `cd /d "${CLONE_DIR}" && git clone ${url}`
     : `cd ${CLONE_DIR} && git clone ${url}`
-
-  await executeCommand(cloneCmd)
-  console.log("Repository downloaded successfully")
 }
 
 function findRepositoryPath() {
   const contents = fs.readdirSync(CLONE_DIR)
-  const directories = contents.filter(item =>
-    fs.statSync(path.join(CLONE_DIR, item)).isDirectory() &&
-    !item.startsWith('.')
+  const directories = filterRepositoryDirectories(contents)
+
+  if (directories.length === 0) {
+    return CLONE_DIR
+  }
+
+  return buildRepositoryPath(directories[0])
+}
+
+function filterRepositoryDirectories(contents) {
+  return contents.filter(item =>
+    isDirectory(item) && !isHidden(item)
   )
+}
 
-  if (directories.length === 0) return CLONE_DIR
+function isDirectory(item) {
+  return fs.statSync(path.join(CLONE_DIR, item)).isDirectory()
+}
 
-  const repoPath = path.join(CLONE_DIR, directories[0])
+function isHidden(item) {
+  return item.startsWith('.')
+}
+
+function buildRepositoryPath(dirName) {
+  const repoPath = path.join(CLONE_DIR, dirName)
   console.log(`Found repository at: ${repoPath}`)
   return repoPath
 }
 
 async function createDirectory(dirPath) {
   try {
-    const cmd = isWindows ? `mkdir "${dirPath}"` : `mkdir -p ${dirPath}`
+    const cmd = buildMkdirCommand(dirPath)
     await executeCommand(cmd)
   } catch {
-    fs.mkdirSync(dirPath, { recursive: true })
+    createDirectoryFallback(dirPath)
   }
 }
 
+function buildMkdirCommand(dirPath) {
+  return isWindows ? `mkdir "${dirPath}"` : `mkdir -p ${dirPath}`
+}
+
+function createDirectoryFallback(dirPath) {
+  fs.mkdirSync(dirPath, { recursive: true })
+}
+
 export async function removeDirectory(dirPath) {
-  if (!fs.existsSync(dirPath)) return
+  if (!fs.existsSync(dirPath)) {
+    return
+  }
 
   try {
-    const cmd = isWindows ? `rmdir /s /q "${dirPath}"` : `rm -rf ${dirPath}`
+    const cmd = buildRemoveCommand(dirPath)
     await executeCommand(cmd)
   } catch {
-    fs.rmSync(dirPath, { recursive: true, force: true })
+    removeDirectoryFallback(dirPath)
   }
+}
+
+function buildRemoveCommand(dirPath) {
+  return isWindows ? `rmdir /s /q "${dirPath}"` : `rm -rf ${dirPath}`
+}
+
+function removeDirectoryFallback(dirPath) {
+  fs.rmSync(dirPath, { recursive: true, force: true })
 }
 
 export function getCloneDirectory() {
@@ -85,9 +160,10 @@ export function getCloneDirectory() {
 }
 
 function displayHeader(url) {
-  console.log(`\n${"=".repeat(50)}`)
+  const separator = "=".repeat(50)
+  console.log(`\n${separator}`)
   console.log(`LANGUAGE ANALYSIS: ${url}`)
-  console.log("=".repeat(50))
+  console.log(separator)
 }
 
 const __filename = fileURLToPath(import.meta.url)
