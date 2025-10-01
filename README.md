@@ -29,19 +29,18 @@ import { analyzeRepository } from './codeMetric.js'
 await analyzeRepository()
 
 // Analyze specific repository
-await analyzeRepository('https://github.com/facebook/react.git')
+await analyzeRepository('https://github.com/ArazAhmet/L2-1dv610.git')
 ```
 
 Output:
 
 ```
 === Language Distribution ===
-Total analyzed: 5.23 MB
+Total analyzed: 0.02 MB
 
-js         45.23%
-html       28.50%
-css        15.12%
-json       11.15%
+md         46.82%
+js         28.57%
+json       24.61%
 ```
 
 ## API Overview
