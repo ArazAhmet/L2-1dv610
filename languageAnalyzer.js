@@ -21,7 +21,7 @@ export async function analyzeLanguageDistribution(directoryPath) {
   }
 }
 
-function loadSupportedLanguages() {
+export function loadSupportedLanguages() {
   const configPath = path.join(process.cwd(), LANGUAGES_FILE)
 
   if (fs.existsSync(configPath)) {
@@ -36,7 +36,7 @@ function loadSupportedLanguages() {
   return DEFAULT_LANGUAGES
 }
 
-function calculateLanguageSizes(files, supportedLanguages) {
+export function calculateLanguageSizes(files, supportedLanguages) {
   const sizes = {}
 
   for (const filePath of files) {
@@ -49,6 +49,10 @@ function calculateLanguageSizes(files, supportedLanguages) {
   }
 
   return sizes
+}
+
+export function getDefaultLanguages() {
+  return [...DEFAULT_LANGUAGES]
 }
 
 function getFileExtension(filePath) {

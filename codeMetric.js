@@ -32,7 +32,7 @@ export async function analyzeRepository(repositoryUrl = DEFAULT_REPO, options = 
   }
 }
 
-async function cloneRepository(url) {
+export async function cloneRepository(url) {
   console.log("Downloading repository...")
 
   await removeDirectory(CLONE_DIR)
@@ -69,7 +69,7 @@ async function createDirectory(dirPath) {
   }
 }
 
-async function removeDirectory(dirPath) {
+export async function removeDirectory(dirPath) {
   if (!fs.existsSync(dirPath)) return
 
   try {
@@ -78,6 +78,10 @@ async function removeDirectory(dirPath) {
   } catch {
     fs.rmSync(dirPath, { recursive: true, force: true })
   }
+}
+
+export function getCloneDirectory() {
+  return CLONE_DIR
 }
 
 function displayHeader(url) {
