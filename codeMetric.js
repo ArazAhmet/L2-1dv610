@@ -2,13 +2,15 @@ import { exec } from "child_process"
 import { promisify } from "util"
 import fs from "fs"
 import path from "path"
+import { fileURLToPath } from 'url'
+import { analyzeLanguageDistribution } from "./languageAnalyzer.js"
 
 const executeCommand = promisify(exec)
 const CLONE_DIR = "./cloned-repository"
 const DEFAULT_REPO = "https://github.com/ArazAhmet/Uppgift_2_Webbteknik.git"
 const isWindows = process.platform === 'win32'
 
-export async function analyzeRepository(repositoryUrl = DEFAULT_REPO) {
+export async function analyzeRepository(repositoryUrl = DEFAULT_REPO, options = {}) {
   try {
     console.log("Starting Language Analyzer...")
     console.log(`Repository: ${repositoryUrl}`)
@@ -16,10 +18,17 @@ export async function analyzeRepository(repositoryUrl = DEFAULT_REPO) {
     await cloneRepository(repositoryUrl)
     const repoPath = findRepositoryPath()
 
-    await removeDirectory(CLONE_DIR)
+    displayHeader(repositoryUrl)
+    await analyzeLanguageDistribution(repoPath)
+
+    if (!options.keepFiles) await removeDirectory(CLONE_DIR)
     console.log("\nAnalysis completed successfully!")
+
   } catch (error) {
     console.error(`Analysis failed: ${error.message}`)
+    if (error.message.includes('git')) {
+      console.error("Check: Git installed? Repository accessible? Internet connection?")
+    }
   }
 }
 
@@ -71,4 +80,13 @@ async function removeDirectory(dirPath) {
   }
 }
 
-analyzeRepository()
+function displayHeader(url) {
+  console.log(`\n${"=".repeat(50)}`)
+  console.log(`LANGUAGE ANALYSIS: ${url}`)
+  console.log("=".repeat(50))
+}
+
+const __filename = fileURLToPath(import.meta.url)
+if (process.argv[1] === __filename) {
+  await analyzeRepository()
+}
