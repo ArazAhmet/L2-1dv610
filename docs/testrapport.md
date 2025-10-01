@@ -13,8 +13,7 @@
 
 | What was tested | How | Result |
 |----------------|-----|--------|
-| Analyze default repo | Ran `node codeMetric.js` with no args → checked console output | Cloned repo, showed `html 52%`, `css 29%`, `js 19%`, cleaned up |
-| Analyze custom repo | Called `analyzeRepository('https://github.com/facebook/react.git')` → verified output | Correctly identified `js 89%`, `html 6%`, other languages |
+| Analyze default repo | Ran `node codeMetric.js` with no args → checked console output | Cloned repo, showed `md 46.82%`, `js 28.57%`, `json 24.61%` |
 | Keep files option | Used `{keepFiles: true}` → checked if `./cloned-repository` exists after | Directory remained with all files intact |
 | Clone repository | Called `cloneRepository(url)` → checked filesystem | Created `./cloned-repository/repo-name` with Git files |
 | Invalid repo URL | Tried `'https://github.com/fake/notreal.git'` → observed error handling | Showed error message, no crash |
@@ -22,7 +21,6 @@
 | Missing languages.txt | Deleted file → ran `loadSupportedLanguages()` | Created file with 27 default languages automatically |
 | Calculate sizes | Ran on test folder with known file sizes → verified calculations | Returned correct MB values per extension |
 | Empty repository | Analyzed repo with no code files → checked output | Showed "No supported files found" |
-| Large repository | Tested on Linux kernel repo (>1GB) → measured time | Worked but took 90+ seconds with no progress indicator |
 
 ## Manual Checks (demo app)
 
@@ -35,6 +33,6 @@
 ## Summary
 
 All 8 public functions work correctly. The analyzer successfully identifies 27+ programming languages and calculates accurate file size distributions. Edge cases like invalid
-repos and missing files are handled gracefully. 
+repos and missing files are handled gracefully.
 
 One known limitation: large repositories (>1GB) take significant time without user feedback. All core functionality is verified and ready for use.
