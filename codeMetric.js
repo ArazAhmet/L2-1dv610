@@ -16,14 +16,17 @@ export async function analyzeRepository(repositoryUrl = DEFAULT_REPO, options = 
 
     const repoPath = await prepareRepository(repositoryUrl)
 
-    await performAnalysis(repositoryUrl, repoPath)
+    const result = await performAnalysis(repositoryUrl, repoPath)
 
     await cleanupIfNeeded(options)
 
     logAnalysisComplete()
 
+    return result
+
   } catch (error) {
     handleAnalysisError(error)
+    throw error
   }
 }
 
@@ -39,7 +42,7 @@ async function prepareRepository(url) {
 
 async function performAnalysis(url, repoPath) {
   displayHeader(url)
-  await analyzeLanguageDistribution(repoPath)
+  return await analyzeLanguageDistribution(repoPath)
 }
 
 async function cleanupIfNeeded(options) {

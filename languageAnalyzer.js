@@ -16,8 +16,11 @@ export async function analyzeLanguageDistribution(directoryPath) {
 
     displayResults(languageSizes)
 
+    return formatResultData(languageSizes, allFiles)
+
   } catch (error) {
     console.error(`Language analysis failed: ${error.message}`)
+    throw error
   }
 }
 
@@ -80,4 +83,35 @@ function displayResults(languageSizes) {
     .forEach(([lang, percent]) => {
       console.log(`${lang.padEnd(10)} ${percent}%`)
     })
+}
+
+function formatResultData(languageSizes, allFiles) {
+  const totalSizeInMB = Object.values(languageSizes).reduce((sum, size) => sum + size, 0)
+  const totalSizeInBytes = totalSizeInMB * MB
+
+  const languages = Object.entries(languageSizes)
+    .map(([lang, sizeMB]) => {
+      const sizeBytes = sizeMB * MB
+      const files = allFiles.filter(f => getFileExtension(f) === lang)
+      const totalLines = files.reduce((sum, file) => {
+        try {
+          const content = fs.readFileSync(file, 'utf-8')
+          return sum + content.split('\n').length
+        } catch {
+          return sum
+        }
+      }, 0)
+
+      return {
+        language: lang,
+        bytes: Math.round(sizeBytes),
+        lines: totalLines
+      }
+    })
+    .sort((a, b) => b.bytes - a.bytes)
+
+  return {
+    totalSize: Math.round(totalSizeInBytes),
+    languages
+  }
 }
